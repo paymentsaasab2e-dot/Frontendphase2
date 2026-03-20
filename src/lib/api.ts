@@ -12,9 +12,18 @@ import type {
 } from '../types/placement';
 
 const DEPLOYED_BACKEND_API = 'http://x5yt9k0kzhb6gg0yeqt12v1q.187.124.169.162.sslip.io/api/v1';
+// Decide API base safely:
+// - Prefer explicit env `NEXT_PUBLIC_API_URL` (recommended on Vercel).
+// - Otherwise, detect localhost by the current browser hostname at runtime.
+// - Fallback to hosted backend for any non-local environment.
 const API_BASE =
   process.env.NEXT_PUBLIC_API_URL?.replace(/\/+$/, '') ||
-  (process.env.NEXT_PUBLIC_VERCEL_URL ? DEPLOYED_BACKEND_API : 'http://localhost:5001/api/v1');
+  (typeof window !== 'undefined' &&
+  (window.location.hostname === 'localhost' ||
+    window.location.hostname === '127.0.0.1' ||
+    window.location.hostname.endsWith('.local')))
+    ? 'http://localhost:5001/api/v1'
+    : DEPLOYED_BACKEND_API;
 
 type HttpMethod = 'GET' | 'POST' | 'PATCH' | 'PUT' | 'DELETE';
 
@@ -40,6 +49,31 @@ function getAccessToken() {
   }
 }
 
+const debugApiLogs =
+  (typeof window !== 'undefined' && process.env.NEXT_PUBLIC_API_DEBUG_LOGS === 'true') ||
+  process.env.NODE_ENV === 'development';
+
+const debugApiLogsFull = typeof window !== 'undefined' && process.env.NEXT_PUBLIC_API_DEBUG_LOGS_FULL === 'true';
+
+function summarizeForLog(value: unknown) {
+  if (!debugApiLogsFull) {
+    if (Array.isArray(value)) return { type: 'array', length: value.length };
+    if (value && typeof value === 'object') {
+      const v = value as Record<string, unknown>;
+      return { type: 'object', keys: Object.keys(v).slice(0, 25) };
+    }
+    return value;
+  }
+
+  // Full logging but still truncate to avoid huge console output.
+  try {
+    const str = JSON.stringify(value);
+    return str.length > 1200 ? `${str.slice(0, 1200)}... (truncated)` : str;
+  } catch {
+    return '[unserializable]';
+  }
+}
+
 export async function apiFetch<T>(
   path: string,
   options: {
@@ -54,12 +88,21 @@ export async function apiFetch<T>(
     'Content-Type': 'application/json',
   };
 
+  if (debugApiLogs) {
+    console.log('[apiFetch] request', {
+      method: options.method || 'GET',
+      path,
+      auth: !!options.auth,
+      body: options.body ? summarizeForLog(options.body) : undefined,
+    });
+  }
+
   // Handle authentication
   if (options.auth) {
     const token = getAccessToken();
     
     // Debug logging (only in development)
-    if (process.env.NODE_ENV === 'development') {
+    if (debugApiLogs) {
       console.log(`[apiFetch] ${options.method || 'GET'} ${path}`);
       console.log('[apiFetch] Token exists:', !!token);
       if (token) {
@@ -85,8 +128,8 @@ export async function apiFetch<T>(
     }
   }
 
-  // Debug: Log request headers (only in development)
-  if (process.env.NODE_ENV === 'development' && options.auth) {
+  // Debug: Log request headers (only when debug enabled)
+  if (debugApiLogs && options.auth) {
     console.log('[apiFetch] Request headers:', {
       'Content-Type': headers['Content-Type'],
       'Authorization': headers.Authorization ? 'Bearer ***' : 'Not set',
@@ -118,6 +161,15 @@ export async function apiFetch<T>(
   }
 
   if (!res.ok || json?.success === false) {
+    if (debugApiLogs) {
+      console.warn('[apiFetch] response error', {
+        path,
+        status: res.status,
+        success: json?.success,
+        message: json?.message,
+        data: summarizeForLog(json?.data),
+      });
+    }
     // Handle 401 specifically - try to refresh token first
     if (res.status === 401 && options.auth) {
       // Try to refresh the token automatically
@@ -188,6 +240,17 @@ export async function apiFetch<T>(
     throw new Error(msg);
   }
 
+  if (debugApiLogs) {
+    console.log('[apiFetch] response ok', {
+      path,
+      status: res.status,
+      success: json?.success,
+      message: json?.message,
+      data: summarizeForLog(json?.data),
+      pagination: json?.pagination,
+    });
+  }
+
   return json as ApiResponse<T>;
 }
 
@@ -202,6 +265,11 @@ async function apiFetchFormData<T>(
 ): Promise<ApiResponse<T>> {
   const url = `${API_BASE}${path}`;
   const headers: Record<string, string> = {};
+
+  if (debugApiLogs) {
+    const entries = Array.from(formData.entries()).slice(0, 10).map(([k, v]) => [k, typeof v === 'string' ? v : typeof v]);
+    console.log('[apiFetchFormData] request', { method: options.method || 'POST', path, auth: !!options.auth, entries });
+  }
 
   if (options.auth) {
     const token = getAccessToken();
@@ -231,7 +299,27 @@ async function apiFetchFormData<T>(
   });
 
   if (!res.ok || json?.success === false) {
+    if (debugApiLogs) {
+      console.warn('[apiFetchFormData] response error', {
+        path,
+        status: res.status,
+        success: json?.success,
+        message: json?.message,
+        data: summarizeForLog(json?.data),
+      });
+    }
     throw new Error(json?.message || `Request failed with status ${res.status}`);
+  }
+
+  if (debugApiLogs) {
+    console.log('[apiFetchFormData] response ok', {
+      path,
+      status: res.status,
+      success: json?.success,
+      message: json?.message,
+      data: summarizeForLog(json?.data),
+      pagination: json?.pagination,
+    });
   }
 
   return json as ApiResponse<T>;
