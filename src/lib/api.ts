@@ -11,9 +11,10 @@ import type {
   RequestReplacementPayload,
 } from '../types/placement';
 
+const DEPLOYED_BACKEND_API = 'http://x5yt9k0kzhb6gg0yeqt12v1q.187.124.169.162.sslip.io/api/v1';
 const API_BASE =
   process.env.NEXT_PUBLIC_API_URL?.replace(/\/+$/, '') ||
-  'http://localhost:5001/api/v1';
+  (process.env.NEXT_PUBLIC_VERCEL_URL ? DEPLOYED_BACKEND_API : 'http://localhost:5001/api/v1');
 
 type HttpMethod = 'GET' | 'POST' | 'PATCH' | 'PUT' | 'DELETE';
 
@@ -2623,7 +2624,6 @@ export const apiUploadTaskFile = async (taskId: string, file: File) => {
     throw new Error('No access token found');
   }
 
-  const API_BASE = process.env.NEXT_PUBLIC_API_URL?.replace(/\/+$/, '') || 'http://localhost:5000/api/v1';
   const url = `${API_BASE}/tasks/${taskId}/files`;
 
   const response = await fetch(url, {
@@ -2654,7 +2654,6 @@ export const apiUploadTaskFiles = async (taskId: string, files: File[]) => {
     throw new Error('No access token found');
   }
 
-  const API_BASE = process.env.NEXT_PUBLIC_API_URL?.replace(/\/+$/, '') || 'http://localhost:5000/api/v1';
   const url = `${API_BASE}/tasks/${taskId}/files/multiple`;
 
   const response = await fetch(url, {
@@ -2707,7 +2706,6 @@ export const apiUploadJobFile = async (jobId: string, file: File, fileType: stri
     throw new Error('No access token found');
   }
 
-  const API_BASE = process.env.NEXT_PUBLIC_API_URL?.replace(/\/+$/, '') || 'http://localhost:5000/api/v1';
   const url = `${API_BASE}/jobs/${jobId}/files`;
 
   const response = await fetch(url, {
@@ -2787,7 +2785,6 @@ export const filesApiUpload = async (
   const token = getAccessToken();
   if (!token) throw new Error('No access token found');
 
-  const API_BASE = process.env.NEXT_PUBLIC_API_URL?.replace(/\/+$/, '') || 'http://localhost:5000/api/v1';
   const response = await fetch(`${API_BASE}/files`, {
     method: 'POST',
     headers: { Authorization: `Bearer ${token}` },
