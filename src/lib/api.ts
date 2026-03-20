@@ -11,34 +11,19 @@ import type {
   RequestReplacementPayload,
 } from '../types/placement';
 
-const DEPLOYED_BACKEND_API = 'http://x5yt9k0kzhb6gg0yeqt12v1q.187.124.169.162.sslip.io/api/v1';
-const isLocalHostname = () =>
+const LOCAL_API_BASE = 'http://localhost:5001/api/v1';
+const PROD_PROXY_BASE = '/api/proxy';
+
+const isLocalBrowser =
   typeof window !== 'undefined' &&
   (window.location.hostname === 'localhost' ||
     window.location.hostname === '127.0.0.1' ||
     window.location.hostname.endsWith('.local'));
 
-const isHttpsPage = () => typeof window !== 'undefined' && window.location.protocol === 'https:';
-
-const normalizeApiBase = (value: string) => value.replace(/\/+$/, '');
-
-const explicitApiBase = process.env.NEXT_PUBLIC_API_URL
-  ? normalizeApiBase(process.env.NEXT_PUBLIC_API_URL)
-  : '';
-
-// For HTTPS pages, browser cannot call HTTP backend directly.
-// In that case we route via same-origin Next API proxy.
-const API_BASE = (() => {
-  if (isLocalHostname()) return 'http://localhost:5001/api/v1';
-
-  if (explicitApiBase) {
-    if (isHttpsPage() && explicitApiBase.startsWith('http://')) return '/api/proxy';
-    return explicitApiBase;
-  }
-
-  if (isHttpsPage()) return '/api/proxy';
-  return DEPLOYED_BACKEND_API;
-})();
+// In production/non-local browsers, always use same-origin proxy to avoid mixed-content errors.
+const API_BASE = isLocalBrowser
+  ? process.env.NEXT_PUBLIC_API_URL?.replace(/\/+$/, '') || LOCAL_API_BASE
+  : PROD_PROXY_BASE;
 
 type HttpMethod = 'GET' | 'POST' | 'PATCH' | 'PUT' | 'DELETE';
 

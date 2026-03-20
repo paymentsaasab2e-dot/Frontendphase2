@@ -1,7 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-const DEFAULT_BACKEND_BASE = 'http://x5yt9k0kzhb6gg0yeqt12v1q.187.124.169.162.sslip.io/api/v1';
+export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic';
 
+const DEFAULT_BACKEND_BASE = 'http://x5yt9k0kzhb6gg0yeqt12v1q.187.124.169.162.sslip.io/api/v1';
 const backendBase = (process.env.BACKEND_INTERNAL_URL || DEFAULT_BACKEND_BASE).replace(/\/$/, '');
 
 const buildTargetUrl = (req: NextRequest, pathParts: string[]) => {
