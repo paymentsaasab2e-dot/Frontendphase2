@@ -22,6 +22,19 @@ const getInitials = (firstName: string, lastName: string) => {
   return `${firstName?.[0] || ''}${lastName?.[0] || ''}`.toUpperCase();
 };
 
+const asSafeString = (value: unknown): string =>
+  typeof value === 'string' ? value : '';
+
+const normalizeMembersPayload = (payload: unknown): TeamMember[] => {
+  if (Array.isArray(payload)) return payload as TeamMember[];
+  if (payload && typeof payload === 'object') {
+    const obj = payload as { data?: unknown; items?: unknown };
+    if (Array.isArray(obj.data)) return obj.data as TeamMember[];
+    if (Array.isArray(obj.items)) return obj.items as TeamMember[];
+  }
+  return [];
+};
+
 export const TargetsTab: React.FC = () => {
   const [members, setMembers] = useState<TeamMember[]>([]);
   const [selectedMember, setSelectedMember] = useState<TeamMember | null>(null);
@@ -43,7 +56,7 @@ export const TargetsTab: React.FC = () => {
     setLoading(true);
     try {
       const res = await getTeamMembers({ status: 'ACTIVE' });
-      setMembers(res.data || []);
+      setMembers(normalizeMembersPayload(res.data));
     } catch (error: any) {
       toast.error(error.message || 'Failed to load team members');
     } finally {
@@ -112,10 +125,13 @@ export const TargetsTab: React.FC = () => {
   const filteredMembers = members.filter((member) => {
     if (!searchQuery) return true;
     const query = searchQuery.toLowerCase();
+    const firstName = asSafeString(member?.firstName).toLowerCase();
+    const lastName = asSafeString(member?.lastName).toLowerCase();
+    const email = asSafeString(member?.email).toLowerCase();
     return (
-      member.firstName.toLowerCase().includes(query) ||
-      member.lastName.toLowerCase().includes(query) ||
-      member.email.toLowerCase().includes(query)
+      firstName.includes(query) ||
+      lastName.includes(query) ||
+      email.includes(query)
     );
   });
 
@@ -152,7 +168,7 @@ export const TargetsTab: React.FC = () => {
               <option value="">Select a team member...</option>
               {filteredMembers.map((member) => (
                 <option key={member.id} value={member.id}>
-                  {member.firstName} {member.lastName} ({member.role.roleName})
+                  {asSafeString(member.firstName)} {asSafeString(member.lastName)} ({asSafeString(member.role?.roleName) || 'No Role'})
                 </option>
               ))}
             </select>
@@ -258,11 +274,11 @@ export const TargetsTab: React.FC = () => {
                       <td className="px-4 py-3 text-sm font-medium text-slate-900">#{index + 1}</td>
                       <td className="px-4 py-3">
                         <div className="flex items-center gap-2">
-                          <div className={`size-8 rounded-full flex items-center justify-center text-xs font-semibold ${roleColorMap[member.role.color.toLowerCase()] || 'bg-gray-100 text-gray-600'}`}>
-                            {getInitials(member.firstName, member.lastName)}
+                          <div className={`size-8 rounded-full flex items-center justify-center text-xs font-semibold ${roleColorMap[asSafeString(member.role?.color).toLowerCase()] || 'bg-gray-100 text-gray-600'}`}>
+                            {getInitials(asSafeString(member.firstName), asSafeString(member.lastName))}
                           </div>
                           <div>
-                            <div className="text-sm font-medium text-slate-900">{member.firstName} {member.lastName}</div>
+                            <div className="text-sm font-medium text-slate-900">{asSafeString(member.firstName)} {asSafeString(member.lastName)}</div>
                           </div>
                         </div>
                       </td>
@@ -304,11 +320,11 @@ export const TargetsTab: React.FC = () => {
                       <td className="px-4 py-3 text-sm font-medium text-slate-900">#{index + 1}</td>
                       <td className="px-4 py-3">
                         <div className="flex items-center gap-2">
-                          <div className={`size-8 rounded-full flex items-center justify-center text-xs font-semibold ${roleColorMap[member.role.color.toLowerCase()] || 'bg-gray-100 text-gray-600'}`}>
-                            {getInitials(member.firstName, member.lastName)}
+                          <div className={`size-8 rounded-full flex items-center justify-center text-xs font-semibold ${roleColorMap[asSafeString(member.role?.color).toLowerCase()] || 'bg-gray-100 text-gray-600'}`}>
+                            {getInitials(asSafeString(member.firstName), asSafeString(member.lastName))}
                           </div>
                           <div>
-                            <div className="text-sm font-medium text-slate-900">{member.firstName} {member.lastName}</div>
+                            <div className="text-sm font-medium text-slate-900">{asSafeString(member.firstName)} {asSafeString(member.lastName)}</div>
                           </div>
                         </div>
                       </td>
