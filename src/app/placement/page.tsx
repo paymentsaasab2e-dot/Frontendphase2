@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { Suspense, useEffect, useMemo, useState } from 'react';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { Download, Plus } from 'lucide-react';
 import { Toaster, toast } from 'sonner';
@@ -13,6 +13,8 @@ import { MarkJoinedDrawer } from '../../components/placements/modals/MarkJoinedD
 import { RequestReplacementDrawer } from '../../components/placements/modals/RequestReplacementDrawer';
 import { usePlacements } from '../../hooks/usePlacements';
 import type { Placement, PlacementFilters } from '../../types/placement';
+
+export const dynamic = 'force-dynamic';
 
 function getFiltersFromParams(searchParams: URLSearchParams): PlacementFilters {
   return {
@@ -36,7 +38,7 @@ function getFiltersFromParams(searchParams: URLSearchParams): PlacementFilters {
   };
 }
 
-export default function PlacementsPage() {
+function PlacementsPageContent() {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -297,5 +299,13 @@ export default function PlacementsPage() {
         }}
       />
     </div>
+  );
+}
+
+export default function PlacementsPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-[#F8F9FB] flex items-center justify-center text-gray-500">Loading placements...</div>}>
+      <PlacementsPageContent />
+    </Suspense>
   );
 }

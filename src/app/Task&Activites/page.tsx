@@ -327,6 +327,16 @@ export default function App() {
   const [stats, setStats] = useState<TaskStats | null>(null);
   const [statsLoading, setStatsLoading] = useState(false);
 
+  const extractBackendTasks = (responseData: unknown): BackendTask[] => {
+    if (Array.isArray(responseData)) return responseData as BackendTask[];
+    if (responseData && typeof responseData === 'object') {
+      const payload = responseData as { data?: unknown; items?: unknown };
+      if (Array.isArray(payload.data)) return payload.data as BackendTask[];
+      if (Array.isArray(payload.items)) return payload.items as BackendTask[];
+    }
+    return [];
+  };
+
   // Fetch tasks and stats from API
   useEffect(() => {
     const fetchData = async () => {
@@ -358,14 +368,7 @@ export default function App() {
 
         // Process tasks
         if (tasksResponse.data) {
-          let fetchedBackendTasks: any[] = [];
-          if (Array.isArray(tasksResponse.data)) {
-            fetchedBackendTasks = tasksResponse.data;
-          } else if (Array.isArray(tasksResponse.data.data)) {
-            fetchedBackendTasks = tasksResponse.data.data;
-          } else if (Array.isArray(tasksResponse.data.items)) {
-            fetchedBackendTasks = tasksResponse.data.items;
-          }
+          const fetchedBackendTasks = extractBackendTasks(tasksResponse.data);
 
           if (Array.isArray(fetchedBackendTasks) && fetchedBackendTasks.length > 0) {
             const typedBackendTasks = fetchedBackendTasks as BackendTask[];
@@ -726,16 +729,7 @@ export default function App() {
           // Refresh tasks after creation
           try {
             const response = await apiGetTasks();
-            let backendTasks: any[] = [];
-            if (response.data) {
-              if (Array.isArray(response.data)) {
-                backendTasks = response.data;
-              } else if (Array.isArray(response.data.data)) {
-                backendTasks = response.data.data;
-              } else if (Array.isArray(response.data.items)) {
-                backendTasks = response.data.items;
-              }
-            }
+            const backendTasks = response.data ? extractBackendTasks(response.data) : [];
             if (Array.isArray(backendTasks) && backendTasks.length > 0) {
               const transformedTasks = backendTasks.map(transformBackendTaskToFrontend);
               setTasks(transformedTasks);
@@ -766,16 +760,7 @@ export default function App() {
           // Refresh tasks list after update
           try {
             const response = await apiGetTasks();
-            let backendTasks: any[] = [];
-            if (response.data) {
-              if (Array.isArray(response.data)) {
-                backendTasks = response.data;
-              } else if (Array.isArray(response.data.data)) {
-                backendTasks = response.data.data;
-              } else if (Array.isArray(response.data.items)) {
-                backendTasks = response.data.items;
-              }
-            }
+            const backendTasks = response.data ? extractBackendTasks(response.data) : [];
             if (Array.isArray(backendTasks) && backendTasks.length > 0) {
               const transformedTasks = backendTasks.map(transformBackendTaskToFrontend);
               setTasks(transformedTasks);
@@ -799,16 +784,7 @@ export default function App() {
             await apiMarkTaskCompleted(taskId);
             // Refresh tasks
             const response = await apiGetTasks();
-            let backendTasks: any[] = [];
-            if (response.data) {
-              if (Array.isArray(response.data)) {
-                backendTasks = response.data;
-              } else if (Array.isArray(response.data.data)) {
-                backendTasks = response.data.data;
-              } else if (Array.isArray(response.data.items)) {
-                backendTasks = response.data.items;
-              }
-            }
+            const backendTasks = response.data ? extractBackendTasks(response.data) : [];
             if (Array.isArray(backendTasks) && backendTasks.length > 0) {
               const transformedTasks = backendTasks.map(transformBackendTaskToFrontend);
               setTasks(transformedTasks);

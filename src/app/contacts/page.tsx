@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { Suspense, useState, useEffect, useMemo } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Plus, Upload, Download, CheckSquare, MoreVertical } from 'lucide-react';
 import { Toaster, toast } from 'sonner';
@@ -23,7 +23,9 @@ import { ImportContactsDrawer } from '../../components/contacts/ImportContactsDr
 import { MergeContactsDrawer } from '../../components/contacts/MergeContactsDrawer';
 import { BulkActionsBar } from '../../components/contacts/BulkActionsBar';
 
-export default function ContactsPage() {
+export const dynamic = 'force-dynamic';
+
+function ContactsPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   
@@ -323,5 +325,13 @@ export default function ContactsPage() {
         }}
       />
     </div>
+  );
+}
+
+export default function ContactsPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-[#F8F9FB] flex items-center justify-center text-gray-500">Loading contacts...</div>}>
+      <ContactsPageContent />
+    </Suspense>
   );
 }

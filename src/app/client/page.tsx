@@ -143,6 +143,16 @@ function mapBackendClientToFrontend(backendClient: BackendClient): Client {
   };
 }
 
+function extractBackendClients(responseData: unknown): BackendClient[] {
+  if (Array.isArray(responseData)) return responseData as BackendClient[];
+  if (responseData && typeof responseData === 'object') {
+    const payload = responseData as { data?: unknown; items?: unknown };
+    if (Array.isArray(payload.data)) return payload.data as BackendClient[];
+    if (Array.isArray(payload.items)) return payload.items as BackendClient[];
+  }
+  return [];
+}
+
 export default function App() {
   const [activeTab, setActiveTab] = useState('all');
   const [isFilterOpen, setIsFilterOpen] = useState(false);
@@ -196,16 +206,7 @@ export default function App() {
         });
 
         // Backend returns: { success: true, message: "...", data: { data: [...], pagination: {...} } }
-        let backendClients: BackendClient[] = [];
-        if (response.data) {
-          if (Array.isArray(response.data)) {
-            backendClients = response.data;
-          } else if (Array.isArray(response.data.data)) {
-            backendClients = response.data.data;
-          } else if (Array.isArray(response.data.items)) {
-            backendClients = response.data.items;
-          }
-        }
+        const backendClients = response.data ? extractBackendClients(response.data) : [];
 
         if (!Array.isArray(backendClients)) {
           console.error('Unexpected API response format: data is not an array.', response);
@@ -271,16 +272,7 @@ export default function App() {
         search: searchQuery || undefined,
       });
 
-      let backendClients: BackendClient[] = [];
-      if (response.data) {
-        if (Array.isArray(response.data)) {
-          backendClients = response.data;
-        } else if (Array.isArray(response.data.data)) {
-          backendClients = response.data.data;
-        } else if (Array.isArray(response.data.items)) {
-          backendClients = response.data.items;
-        }
-      }
+      const backendClients = response.data ? extractBackendClients(response.data) : [];
 
       const mappedClients = backendClients.map(mapBackendClientToFrontend);
       // Deduplicate clients by ID to prevent duplicate key errors

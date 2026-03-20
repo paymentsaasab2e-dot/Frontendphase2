@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { Suspense, useState, useEffect, useMemo } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { Plus } from 'lucide-react';
 import { MembersTab } from '../../components/team/tabs/MembersTab';
@@ -11,9 +11,11 @@ import { CredentialsTab } from '../../components/team/tabs/CredentialsTab';
 import { AddMemberDrawer } from '../../components/team/AddMemberDrawer';
 import { usePermissions } from '../../hooks/usePermissions';
 
+export const dynamic = 'force-dynamic';
+
 type TabType = 'members' | 'roles' | 'departments' | 'targets' | 'credentials';
 
-export default function TeamPage() {
+function TeamPageContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const { hasPermission, isSuperAdmin } = usePermissions();
@@ -169,5 +171,13 @@ export default function TeamPage() {
         }}
       />
     </div>
+  );
+}
+
+export default function TeamPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-[#F8F9FB] flex items-center justify-center text-gray-500">Loading team...</div>}>
+      <TeamPageContent />
+    </Suspense>
   );
 }

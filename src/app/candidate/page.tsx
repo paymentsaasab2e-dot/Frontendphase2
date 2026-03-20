@@ -46,6 +46,8 @@ import {
   type BackendUser,
 } from '../../lib/api';
 import { useSearchParams, useRouter } from 'next/navigation';
+
+export const dynamic = 'force-dynamic';
 import { toast } from 'sonner';
 
 /** MongoDB ObjectIDs are 24 hex characters. Avoids invalid ID errors when opening profile. */

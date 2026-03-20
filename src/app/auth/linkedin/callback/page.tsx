@@ -1,9 +1,11 @@
 'use client';
 
-import { useEffect } from 'react';
+import { Suspense, useEffect } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 
-export default function LinkedInCallbackPage() {
+export const dynamic = 'force-dynamic';
+
+function LinkedInCallbackContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
 
@@ -47,5 +49,13 @@ export default function LinkedInCallbackPage() {
         <p className="text-slate-600">Connecting your LinkedIn account...</p>
       </div>
     </div>
+  );
+}
+
+export default function LinkedInCallbackPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-[#F8F9FB] flex items-center justify-center text-gray-500">Processing LinkedIn login...</div>}>
+      <LinkedInCallbackContent />
+    </Suspense>
   );
 }

@@ -2260,7 +2260,7 @@ export const apiGetContacts = async (filters?: ContactFilters) => {
 };
 
 export const apiGetContact = async (id: string) => {
-  return apiFetch<ApiResponse<BackendContact>>(`/contacts/${id}`, { auth: true });
+  return apiFetch<BackendContact>(`/contacts/${id}`, { auth: true });
 };
 
 export const apiCreateContact = async (data: CreateContactData) => {

@@ -106,14 +106,9 @@ export default function ContactProfilePage() {
             <div className="bg-white rounded-xl border border-gray-200 p-6">
               <div className="text-center mb-6">
                 <ImageWithFallback
-                  src={contact.avatarUrl}
+                  src={contact.avatarUrl ?? undefined}
                   alt={`${contact.firstName} ${contact.lastName}`}
                   className="w-24 h-24 rounded-full object-cover mx-auto ring-4 ring-white shadow-lg"
-                  fallback={
-                    <div className="w-24 h-24 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-semibold text-2xl mx-auto ring-4 ring-white shadow-lg">
-                      {getInitials(contact)}
-                    </div>
-                  }
                 />
                 <h2 className="text-xl font-bold text-gray-900 mt-4">
                   {contact.firstName} {contact.lastName}
