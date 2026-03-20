@@ -18,9 +18,19 @@ import type {
 // We'll use a custom base or adjust the path
 // Remove /api/v1 if present, as new routes are at /api/team, /api/roles, etc.
 const getApiBase = () => {
-  const base = process.env.NEXT_PUBLIC_API_URL?.replace(/\/+$/, '') || 'http://localhost:5001';
-  // If base includes /api/v1, remove it since new routes don't use /v1
-  return base.replace(/\/api\/v1$/, '');
+  const isLocalBrowser =
+    typeof window !== 'undefined' &&
+    (window.location.hostname === 'localhost' ||
+      window.location.hostname === '127.0.0.1' ||
+      window.location.hostname.endsWith('.local'));
+
+  if (isLocalBrowser) {
+    const base = process.env.NEXT_PUBLIC_API_URL?.replace(/\/+$/, '') || 'http://localhost:5001';
+    return base.replace(/\/api\/v1$/, '');
+  }
+
+  // Production/non-local browsers must use same-origin proxy to avoid mixed-content.
+  return '/api/proxy';
 };
 const API_BASE_NEW = getApiBase();
 
